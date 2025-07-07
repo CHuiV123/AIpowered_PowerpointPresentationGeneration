@@ -91,7 +91,7 @@ async def generate_slides(
             "content based on content formate selected by user"
             "and so on. Do not include any markdown formatting (e.g., **bold** or *italic*), only plain text."
         )
-        user_message = f"Topic: {prompt}\nPlease generate a presentation content with exactly {num_slides} slides and {content_format.lower()} as described above.For brief generation, the text should be less than 100 words per slide.For detailed generation, the text should be more than 200 words per slide. Generate relevant image for each slide. Only one image per slide. "
+        user_message = f"Topic: {prompt}\nPlease generate a presentation content with exactly {num_slides} slides and {content_format.lower()} as described above.For brief generation, the text should be less than 100 words per slide.For detailed generation, the text should be more than 200 words per slide."
 
         outline_text = ""
 
