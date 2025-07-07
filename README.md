@@ -15,7 +15,7 @@ This is a project to generate Powerpoint Presentation utilizing the power of Gen
 4️⃣ Run pip install -r requirements.txt to install all the dependencies. 
 
 
-How to run (Windows):
+<h2> How to run (Windows): </h2>
 
 1️⃣ Double-click start application.bat to start the backend and frontend. 
 
