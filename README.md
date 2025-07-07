@@ -17,7 +17,7 @@ This is a project to generate Powerpoint Presentation utilizing the power of Gen
 
 <h2> How to run (Windows): </h2>
 
-1️⃣ Double-click start application.bat to start the backend and frontend. 
+1️⃣ Double-click PowerPointGenAPP.bat to start the backend and frontend. 
 
 2️⃣ Once backend and frontend started, there will be 2 comman prompt pops up each running the backend and frontend process. 
 
