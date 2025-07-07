@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+streamlit
+openai
+google-generativeai
+pillow
+pywin32
+requests
+streamlit-folder-picker
