@@ -2,23 +2,19 @@ import streamlit as st
 import requests
 import base64
 
-st.set_page_config(page_title="SHRDC MSF GENAI PowerPoint Generator", page_icon="📝", layout="centered",initial_sidebar_state="collapsed")
-# with st.sidebar:
-#     st.subheader("**:blue[Selangor Human Resource Development Centre]**")
-#     st.markdown("   ")
-#     col1, col2 = st.columns(2)
-#     with col1: 
-#         st.image("static/shrdc.jpg")
-#     with col2: 
-#         st.image("static/msf.jpg", caption="Malaysian Smart Factory")     
-#     st.image("static/genai.jpg",caption="Generative AI Hub", width=3)
-#     st.markdown("---")
-#     st.markdown("### About")
-#     st.markdown("Create amazing slides powered by AI ✨")
-#     st.write("Version: 2.0")
-#     st.write("Made with ❤️ by Hui Voon")
-#     st.markdown("[Visit my website](https://github.com/CHuiV123?tab=repositories)")
-    
+st.set_page_config(
+    page_title="SHRDC MSF GENAI PowerPoint Generator",
+    page_icon="📝",
+    layout="centered",
+    initial_sidebar_state="expanded"
+)
+
+# Sidebar
+with st.sidebar:
+    st.title("Style")
+    use_bullets = st.selectbox("Slide content style", ["Bullet points", "Paragraph"])
+    detail_level = st.selectbox("Detail level", ["Brief", "Detailed"])
+    temperature = st.slider("Creativity (temperature)", 0.1, 1.0, 0.7, 0.1)
 
 st.title("🤖💡 AI PowerPoint Slide Generator")
 
@@ -33,7 +29,7 @@ if provider != "ollama":
 else:
     ollama_url = st.text_input("Ollama URL", value="http://localhost:11434")
 
-# Auto-fetch models immediately when provider or url changes
+# Load models
 if provider == "ollama":
     if ollama_url:
         with st.spinner("Loading Ollama models..."):
@@ -68,7 +64,6 @@ model = st.selectbox("Select Model", models)
 
 prompt = st.text_area("Presentation Topic or Description", height=150)
 num_slides = st.slider("Number of slides", min_value=3, max_value=20, value=7)
-
 bg_image_file = st.file_uploader("Upload background image (optional)", type=["jpg", "png"])
 opacity = st.slider("Background image opacity (%)", min_value=10, max_value=100, value=100)
 
@@ -89,11 +84,14 @@ if st.button("Generate Presentation"):
             "bg_image_base64": bg_image_base64,
             "opacity": opacity,
             "ollama_url": ollama_url,
+            "use_bullets": use_bullets,
+            "detail_level": detail_level,
+            "temperature": temperature,
         }
 
         with st.spinner("Generating presentation..."):
             try:
-                response = requests.post("http://127.0.0.1:8080/generate_slides", data=data, timeout=120)
+                response = requests.post("http://127.0.0.1:8080/generate_slides", data=data, timeout=180)
                 if response.status_code == 200:
                     resp_json = response.json()
                     if "message" in resp_json:
@@ -107,17 +105,18 @@ if st.button("Generate Presentation"):
 
 st.markdown("---")
 col1, col2, col3 = st.columns(3)
-with col1: 
+
+with col1:
     st.markdown("### About")
-    st.markdown("Create amazing slides powered by AI ✨   Version: 2.0")
+    st.markdown("Create amazing slides powered by AI ✨   Version: 2.1")
     st.write("Made with ❤️ by Hui Voon")
-    
+
 with col2:
-    st.image("static/shrdc.jpg", width=200, caption= "Selangor Human Resource Development Centre")
-    
-with col3: 
-    col4,col5 = st.columns(2)
-    with col4: 
-        st.image("static/msf.jpg", caption="Malaysian Smart Factory") 
-    with col5: 
-        st.image("static/genai.jpg",caption="Generative AI Innovation Hub") 
+    st.image("static/shrdc.jpg", width=200, caption="Selangor Human Resource Development Centre")
+
+with col3:
+    col4, col5 = st.columns(2)
+    with col4:
+        st.image("static/msf.jpg", caption="Malaysian Smart Factory")
+    with col5:
+        st.image("static/genai.jpg", caption="Generative AI Innovation Hub")
