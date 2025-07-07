@@ -2,6 +2,18 @@
 This is a project to generate Powerpoint Presentation utilizing the power of Generative AI. Current project is compatible with windows's PC that has locally installed PowerPoint. 
 
 
+Pre-requisite: 
+1️⃣ Get python installed in your pc if you have not already done so. 
+
+2️⃣ Install git in your pc (if you do not have one). 
+
+3️⃣ Open up command prompt, cd into desktop using the command "cd desktop", create a folder using the command "mkdir PowerPoint_App". 
+    Next, cd into the folder you have just created using "cd Powerpoint_App"). 
+    Then, git clone this repository by running git clone "https://github.com/CHuiV123/AIpowered_PowerpointPresentationGeneration.git". 
+
+4️⃣ Run pip install -r requirements.txt to install all the dependencies. 
+
+
 How to run (Windows):
 
 1️⃣ Double-click start application.bat to start the backend and frontend. 
