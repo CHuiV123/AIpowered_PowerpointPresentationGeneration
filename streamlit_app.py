@@ -65,7 +65,7 @@ model = st.selectbox("Select Model", models)
 prompt = st.text_area("Presentation Topic or Description", height=150)
 num_slides = st.slider("Number of slides", min_value=3, max_value=20, value=7)
 bg_image_file = st.file_uploader("Upload background image (optional)", type=["jpg", "png"])
-opacity = st.slider("Background image opacity (%)", min_value=10, max_value=100, value=100)
+opacity = st.slider("Background image opacity (%)", min_value=10, max_value=100, value=15)
 
 if st.button("Generate Presentation"):
     if not model or not prompt:
