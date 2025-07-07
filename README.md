@@ -30,4 +30,7 @@ This is a project to generate Powerpoint Presentation utilizing the power of Gen
 6️⃣ Click "Generate Presentation" — PowerPoint slides will be genrated and open automatically.
 
 
-<h1> Contributors are welcome!!! 🎉🎉🎉</h1>
+<h1> 🎉🎉🎉 User can now upload information from text file(.txt), pdf file (.pdf) and word file (.docx) as part of the information source for powerpoint presentation slide generation in this new release!! </h1>
+
+
+<h2> Contributors are welcome!!! 🎉🎉🎉</h2>

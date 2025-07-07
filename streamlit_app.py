@@ -1,6 +1,8 @@
 import streamlit as st
 import requests
 import base64
+import docx
+import PyPDF2
 
 st.set_page_config(
     page_title="SHRDC MSF GENAI PowerPoint Generator",
@@ -9,9 +11,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar
+# Sidebar options
 with st.sidebar:
-    st.title("Style")
+    st.title("Options")
     use_bullets = st.selectbox("Slide content style", ["Bullet points", "Paragraph"])
     detail_level = st.selectbox("Detail level", ["Brief", "Detailed"])
     temperature = st.slider("Creativity (temperature)", 0.1, 1.0, 0.7, 0.1)
@@ -62,18 +64,54 @@ elif api_key:
 
 model = st.selectbox("Select Model", models)
 
-prompt = st.text_area("Presentation Topic or Description", height=150)
+# --- New option for content source ---
+content_source = st.radio("Choose how to provide content", ["Write Topic or Description", "Upload Document"])
+
+uploaded_text = ""
+user_instruction = ""
+prompt = ""
+
+if content_source == "Write Topic or Description":
+    prompt = st.text_area("Presentation Topic or Description", height=150)
+else:
+    uploaded_file = st.file_uploader("Upload document", type=["txt", "pdf", "docx"])
+    if uploaded_file is not None:
+        file_type = uploaded_file.type
+
+        # Read TXT
+        if uploaded_file.name.endswith(".txt"):
+            uploaded_text = uploaded_file.read().decode("utf-8")
+        
+        # Read PDF
+        elif uploaded_file.name.endswith(".pdf"):
+            pdf_reader = PyPDF2.PdfReader(uploaded_file)
+            text = ""
+            for page in pdf_reader.pages:
+                text += page.extract_text() or ""
+            uploaded_text = text
+        
+        # Read DOCX
+        elif uploaded_file.name.endswith(".docx"):
+            doc = docx.Document(uploaded_file)
+            text = "\n".join([para.text for para in doc.paragraphs])
+            uploaded_text = text
+
+    user_instruction = st.text_area("Instruction on how to generate slides from document", height=120)
+
 num_slides = st.slider("Number of slides", min_value=3, max_value=20, value=7)
+
 bg_image_file = st.file_uploader("Upload background image (optional)", type=["jpg", "png"])
 opacity = st.slider("Background image opacity (%)", min_value=10, max_value=100, value=15)
 
 if st.button("Generate Presentation"):
-    if not model or not prompt:
-        st.error("Please provide both model and prompt.")
+    if not model:
+        st.error("Please select a model.")
     else:
         bg_image_base64 = ""
         if bg_image_file:
             bg_image_base64 = base64.b64encode(bg_image_file.read()).decode("utf-8")
+
+        use_uploaded_doc = "true" if content_source == "Upload Document" and uploaded_text.strip() else "false"
 
         data = {
             "provider": provider,
@@ -84,14 +122,17 @@ if st.button("Generate Presentation"):
             "bg_image_base64": bg_image_base64,
             "opacity": opacity,
             "ollama_url": ollama_url,
-            "use_bullets": use_bullets,
+            "content_format": use_bullets,
             "detail_level": detail_level,
             "temperature": temperature,
+            "use_uploaded_doc": use_uploaded_doc,
+            "uploaded_text": uploaded_text,
+            "user_instruction": user_instruction,
         }
 
         with st.spinner("Generating presentation..."):
             try:
-                response = requests.post("http://127.0.0.1:8080/generate_slides", data=data, timeout=180)
+                response = requests.post("http://127.0.0.1:8080/generate_slides", data=data, timeout=300)
                 if response.status_code == 200:
                     resp_json = response.json()
                     if "message" in resp_json:
@@ -108,7 +149,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("### About")
-    st.markdown("Create amazing slides powered by AI ✨   Version: 1.0.1")
+    st.markdown("Create amazing slides powered by AI ✨   Version: 2.0")
     st.write("Made with ❤️ by Hui Voon")
 
 with col2:

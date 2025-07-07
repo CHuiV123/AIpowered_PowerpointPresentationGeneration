@@ -7,3 +7,6 @@ pillow
 pywin32
 requests
 python-multipart
+python-docx
+PyPDF2
+

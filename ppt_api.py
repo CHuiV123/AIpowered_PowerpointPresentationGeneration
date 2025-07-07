@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Form
+from fastapi import FastAPI, Form, UploadFile, File
 from fastapi.responses import JSONResponse
 import win32com.client
 import os
@@ -70,28 +70,47 @@ async def generate_slides(
     provider: str = Form(...),
     model: str = Form(...),
     api_key: str = Form(""),
-    prompt: str = Form(...),
+    prompt: str = Form(""),
     num_slides: int = Form(7),
     bg_image_base64: str = Form(""),
     opacity: int = Form(100),
     ollama_url: str = Form(""),
     content_format: str = Form("Bullet Points"),
     detail_level: str = Form("Brief"),
-    temperature: float = Form(0.7)  # ✅ NEW PARAMETER
+    use_uploaded_doc: str = Form("false"),
+    uploaded_text: str = Form(""),
+    user_instruction: str = Form("")
 ):
     try:
+        # Base system message
         system_message = (
-            f"You are a presentation expert. Please create a presentation content as follows:\n"
+            f"You are a presentation expert. Please create presentation content as follows:\n"
             "- Slide 1 should be a title-only slide (no bullets).\n"
-            f"- Slide 2 onward should contain content selected by user in {content_format.lower()} format.\n"
-            f"- The content should be {detail_level.lower()} and tailored for clear presentations.\n"
+            f"- Slide 2 onward should use {content_format.lower()} format.\n"
+            f"- The content should be {detail_level.lower()} and tailored for clear presentation.\n"
             "Format clearly like:\n"
             "1. Title of Slide 1\n"
             "2. Title of Slide 2\n"
-            "content based on content formate selected by user"
+            "content based on chosen format"
             "and so on. Do not include any markdown formatting (e.g., **bold** or *italic*), only plain text."
+            "You need to figure out what is suitable to be the title for each slide unless user specify it in user_context"
         )
-        user_message = f"Topic: {prompt}\nPlease generate a presentation content with exactly {num_slides} slides and {content_format.lower()} as described above.For brief generation, the text should be less than 100 words per slide.For detailed generation, the text should be more than 200 words per slide."
+
+        # Build user context based on uploaded doc or prompt
+        if use_uploaded_doc.lower() == "true" and uploaded_text.strip():
+            user_context = (
+                f"Context from document:\n{uploaded_text.strip()}\n"
+                f"Instruction from user: {user_instruction.strip()}\n"
+                f"Please generate a presentation with exactly {num_slides} slides using this information as the main source."
+                f"if {detail_level.lower()} is brief generate the text in less than 150 words. if {detail_level.lower()} is detailed, generate the text is between 350-500 words."
+            )
+        else:
+            user_context = (
+                f"Topic: {prompt}\n"
+                f"{user_instruction.strip()}\n"
+                f"Please generate a presentation with exactly {num_slides} slides as described above."
+                f"if {detail_level.lower()} is brief generate the text in less than 150 words. if {detail_level.lower()} is detailed, generate the text is between 350-500 words."
+            )
 
         outline_text = ""
 
@@ -99,32 +118,24 @@ async def generate_slides(
             client = OpenAI(api_key=api_key)
             messages = [
                 {"role": "system", "content": system_message},
-                {"role": "user", "content": user_message}
+                {"role": "user", "content": user_context}
             ]
-            response = client.chat.completions.create(
-                model=model,
-                messages=messages,
-                temperature=temperature  # ✅ ADDED
-            )
+            response = client.chat.completions.create(model=model, messages=messages)
             outline_text = response.choices[0].message.content
 
         elif provider == "gemini":
             configure_gemini(api_key=api_key)
             model_instance = GenerativeModel(model)
-            content = system_message + "\n" + user_message
-            response = model_instance.generate_content(
-                content,
-                generation_config={"temperature": temperature}  # ✅ ADDED
-            )
+            content = system_message + "\n" + user_context
+            response = model_instance.generate_content(content)
             outline_text = response.text
 
         elif provider == "ollama":
             ollama_url_final = ollama_url.rstrip("/") + "/api/generate"
             payload = {
                 "model": model,
-                "prompt": system_message + "\n" + user_message,
-                "stream": True,
-                "options": {"temperature": temperature}  # ✅ ADDED
+                "prompt": system_message + "\n" + user_context,
+                "stream": True
             }
 
             max_retries = 3
@@ -132,7 +143,6 @@ async def generate_slides(
                 try:
                     with requests.post(ollama_url_final, json=payload, stream=True, timeout=120) as resp:
                         resp.raise_for_status()
-
                         outline_text = ""
                         for line in resp.iter_lines(decode_unicode=True):
                             if line.strip():
@@ -212,6 +222,7 @@ async def generate_slides(
     except Exception as e:
         return JSONResponse(content={"error": str(e)})
 
+
 def parse_outline(outline_text):
     slides = []
     slide_matches = re.findall(r'(\d+\..*?)(?=(\n\d+\.|\Z))', outline_text, re.S)
@@ -224,8 +235,7 @@ def parse_outline(outline_text):
 
         title_line = lines[0].strip()
         title_line = re.sub(r"^\d+\.\s*", "", title_line).strip()
-        # Updated line below to handle *, -, • and spaces
-        bullets = [line.lstrip("-•* ").strip() for line in lines[1:] if line.strip()]
+        bullets = [line.strip("-• ").strip() for line in lines[1:] if line.strip()]
         slides.append({"title": title_line, "bullets": bullets})
 
     return slides
