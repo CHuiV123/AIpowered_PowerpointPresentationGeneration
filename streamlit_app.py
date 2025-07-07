@@ -108,7 +108,7 @@ col1, col2, col3 = st.columns(3)
 
 with col1:
     st.markdown("### About")
-    st.markdown("Create amazing slides powered by AI ✨   Version: 2.1")
+    st.markdown("Create amazing slides powered by AI ✨   Version: 1.0.1")
     st.write("Made with ❤️ by Hui Voon")
 
 with col2:
