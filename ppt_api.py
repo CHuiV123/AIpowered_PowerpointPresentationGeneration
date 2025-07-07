@@ -74,23 +74,26 @@ async def generate_slides(
     num_slides: int = Form(7),
     bg_image_base64: str = Form(""),
     opacity: int = Form(100),
-    ollama_url: str = Form("")
+    ollama_url: str = Form(""),
+    content_format: str = Form("Bullet Points"),
+    detail_level: str = Form("Brief"),
+    temperature: float = Form(0.7)  # ✅ NEW PARAMETER
 ):
     try:
-        outline_text = ""
-
         system_message = (
-            "You are a presentation expert. Please create a presentation outline as follows:\n"
+            f"You are a presentation expert. Please create a presentation content as follows:\n"
             "- Slide 1 should be a title-only slide (no bullets).\n"
-            "- Slide 2 onward should have a title and 3-5 bullet points each.\n"
+            f"- Slide 2 onward should contain content selected by user in {content_format.lower()} format.\n"
+            f"- The content should be {detail_level.lower()} and tailored for clear presentations.\n"
             "Format clearly like:\n"
             "1. Title of Slide 1\n"
             "2. Title of Slide 2\n"
-            "- Bullet point 1\n"
-            "- Bullet point 2\n"
+            "content based on content formate selected by user"
             "and so on. Do not include any markdown formatting (e.g., **bold** or *italic*), only plain text."
         )
-        user_message = f"Topic: {prompt}\nPlease generate a presentation outline with exactly {num_slides} slides as described above."
+        user_message = f"Topic: {prompt}\nPlease generate a presentation content with exactly {num_slides} slides and {content_format.lower()} as described above.For brief generation, the text should be less than 100 words per slide.For detailed generation, the text should be more than 200 words per slide. Generate relevant image for each slide. Only one image per slide. "
+
+        outline_text = ""
 
         if provider == "openai":
             client = OpenAI(api_key=api_key)
@@ -98,14 +101,21 @@ async def generate_slides(
                 {"role": "system", "content": system_message},
                 {"role": "user", "content": user_message}
             ]
-            response = client.chat.completions.create(model=model, messages=messages)
+            response = client.chat.completions.create(
+                model=model,
+                messages=messages,
+                temperature=temperature  # ✅ ADDED
+            )
             outline_text = response.choices[0].message.content
 
         elif provider == "gemini":
             configure_gemini(api_key=api_key)
             model_instance = GenerativeModel(model)
             content = system_message + "\n" + user_message
-            response = model_instance.generate_content(content)
+            response = model_instance.generate_content(
+                content,
+                generation_config={"temperature": temperature}  # ✅ ADDED
+            )
             outline_text = response.text
 
         elif provider == "ollama":
@@ -113,7 +123,8 @@ async def generate_slides(
             payload = {
                 "model": model,
                 "prompt": system_message + "\n" + user_message,
-                "stream": True
+                "stream": True,
+                "options": {"temperature": temperature}  # ✅ ADDED
             }
 
             max_retries = 3
@@ -130,10 +141,8 @@ async def generate_slides(
                                     outline_text += data.get("response", "")
                                 except json.JSONDecodeError:
                                     continue
-
                         outline_text = outline_text.strip()
-                    break  # ✅ Success
-
+                    break
                 except requests.exceptions.RequestException as e:
                     if attempt < max_retries - 1:
                         time.sleep(2)
@@ -153,7 +162,6 @@ async def generate_slides(
         if bg_image_base64:
             image_data = base64.b64decode(bg_image_base64)
             pil_image = Image.open(BytesIO(image_data)).convert("RGBA")
-
             if opacity < 100:
                 alpha = pil_image.split()[3]
                 alpha = alpha.point(lambda p: int(p * (opacity / 100.0)))
@@ -168,30 +176,21 @@ async def generate_slides(
 
             if i == 0:
                 slide = presentation.Slides.Add(presentation.Slides.Count + 1, 1)
-                if adjusted_bg_path and os.path.exists(adjusted_bg_path):
-                    slide.FollowMasterBackground = False
-                    fill = slide.Background.Fill
-                    fill.UserPicture(adjusted_bg_path)
-
-                title_shape = slide.Shapes.Title
-                title_range = title_shape.TextFrame.TextRange
-                title_range.Text = title
-                title_range.Font.Bold = False
-                title_range.Font.Name = "Arial"
-
             else:
                 slide = presentation.Slides.Add(presentation.Slides.Count + 1, 2)
-                if adjusted_bg_path and os.path.exists(adjusted_bg_path):
-                    slide.FollowMasterBackground = False
-                    fill = slide.Background.Fill
-                    fill.UserPicture(adjusted_bg_path)
 
-                title_shape = slide.Shapes.Title
-                title_range = title_shape.TextFrame.TextRange
-                title_range.Text = title
-                title_range.Font.Bold = False
-                title_range.Font.Name = "Arial"
+            if adjusted_bg_path and os.path.exists(adjusted_bg_path):
+                slide.FollowMasterBackground = False
+                fill = slide.Background.Fill
+                fill.UserPicture(adjusted_bg_path)
 
+            title_shape = slide.Shapes.Title
+            title_range = title_shape.TextFrame.TextRange
+            title_range.Text = title
+            title_range.Font.Bold = False
+            title_range.Font.Name = "Arial"
+
+            if i != 0:
                 content_shape = slide.Shapes.Placeholders(2)
                 content_range = content_shape.TextFrame.TextRange
                 content_range.Text = "\n".join(bullets)
@@ -225,8 +224,8 @@ def parse_outline(outline_text):
 
         title_line = lines[0].strip()
         title_line = re.sub(r"^\d+\.\s*", "", title_line).strip()
-
-        bullets = [line.strip("-• ").strip() for line in lines[1:] if line.strip()]
+        # Updated line below to handle *, -, • and spaces
+        bullets = [line.lstrip("-•* ").strip() for line in lines[1:] if line.strip()]
         slides.append({"title": title_line, "bullets": bullets})
 
     return slides
