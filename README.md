@@ -3,6 +3,7 @@ This is a project to generate Powerpoint Presentation utilizing the power of Gen
 
 
 Pre-requisite: 
+
 1️⃣ Get python installed in your pc if you have not already done so. 
 
 2️⃣ Install git in your pc (if you do not have one). 
