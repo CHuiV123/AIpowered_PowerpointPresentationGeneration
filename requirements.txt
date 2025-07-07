@@ -6,4 +6,4 @@ google-generativeai
 pillow
 pywin32
 requests
-streamlit-folder-picker
+python-multipart
