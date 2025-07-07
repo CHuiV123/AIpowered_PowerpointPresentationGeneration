@@ -2,7 +2,7 @@
 This is a project to generate Powerpoint Presentation utilizing the power of Generative AI. Current project is compatible with windows's PC that has locally installed PowerPoint. 
 
 
-Pre-requisite: 
+<h2> Pre-requisite: </h2>
 
 1️⃣ Get python installed in your pc if you have not already done so. 
 
