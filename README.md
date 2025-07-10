@@ -8,11 +8,12 @@ This is a project to generate Powerpoint Presentation utilizing the power of Gen
 
 2️⃣ Install git https://git-scm.com/downloads
 
-3️⃣ Open up command prompt, cd into desktop using the command "cd desktop", create a folder using the command "mkdir PowerPoint_App". 
-    Next, cd into the folder you have just created using "cd Powerpoint_App"). 
+3️⃣ Open up command prompt, cd into desktop using the command "cd desktop", create a folder using the command "mkdir PowerPointApp". 
+    Next, cd into the folder you have just created using "cd PowerpointApp"). 
     Then, git clone this repository by running git clone "https://github.com/CHuiV123/AIpowered_PowerpointPresentationGeneration.git". 
 
-4️⃣ Run pip install -r requirements.txt to install all the dependencies. 
+4️⃣ Option    1: Run pip install -r requirements.txt to install all the dependencies. 
+   Option    2: Double click on the PowerPointGenAPP.bat. 
 
 
 <h2> How to run (Windows): </h2>
